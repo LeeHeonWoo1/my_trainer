@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transfer Learning Model Training</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/transfer_learning.css')}}">
+</head>
+<body>
+    <div class="container">
+        <h1>Transfer Learning Model Training</h1>
+        <form id="transferForm">
+            <label for="modelName">Model:</label>
+            <select id="modelName" name="modelName" required>
+                <option value="resnet50">ResNet50</option>
+                <option value="vgg16">VGG16</option>
+                <option value="inceptionv3">InceptionV3</option>
+                <option value="mobilenet">MobileNet</option>
+            </select>
+
+            <label for="epochs">Epochs:</label>
+            <input type="number" id="epochs" name="epochs" min="1" required>
+            
+            <label for="batchSize">Batch Size:</label>
+            <input type="number" id="batchSize" name="batchSize" min="1" required>
+            
+            <label for="learningRate">Learning Rate:</label>
+            <input type="number" id="learningRate" name="learningRate" step="0.0001" min="0" required>
+
+            <div id="fcLayerBlocks">
+                <h2>Fully Connected Layers</h2>
+                <div class="fcLayerBlock">
+                    <label for="units_1">Units:</label>
+                    <input type="number" id="units_1" name="units" min="1" required>
+
+                    <label for="activation_1">Activation:</label>
+                    <select id="activation_1" name="activation" required>
+                        <option value="relu">ReLU</option>
+                        <option value="sigmoid">Sigmoid</option>
+                        <option value="tanh">Tanh</option>
+                        <option value="softmax">Softmax</option>
+                    </select>
+                </div>
+            </div>
+            <button type="button" onclick="addFCLayerBlock()">Add Fully Connected Layer</button>
+            <button type="button" onclick="submitForm()">Train Model</button>
+        </form>
+        <div id="output"></div>
+    </div>
+</body>
+</html>
+<script>
+let fcLayerCount = 1;
+
+function addFCLayerBlock() {
+    fcLayerCount++;
+    const fcLayerBlock = document.createElement('div');
+    fcLayerBlock.className = 'fcLayerBlock';
+    fcLayerBlock.innerHTML = `
+        <label for="units_${fcLayerCount}">Units:</label>
+        <input type="number" id="units_${fcLayerCount}" name="units" min="1" required>
+
+        <label for="activation_${fcLayerCount}">Activation:</label>
+        <select id="activation_${fcLayerCount}" name="activation" required>
+            <option value="relu">ReLU</option>
+            <option value="sigmoid">Sigmoid</option>
+            <option value="tanh">Tanh</option>
+            <option value="softmax">Softmax</option>
+        </select>
+    `;
+    document.getElementById('fcLayerBlocks').appendChild(fcLayerBlock);
+
+    // Scroll to the bottom of the container to show the new layer block
+    document.querySelector('.container').scrollTop = document.querySelector('.container').scrollHeight;
+}
+
+function submitForm() {
+    const modelName = document.getElementById('modelName').value;
+    const epochs = document.getElementById('epochs').value;
+    const batchSize = document.getElementById('batchSize').value;
+    const learningRate = document.getElementById('learningRate').value;
+
+    const fcLayers = [];
+    for (let i = 1; i <= fcLayerCount; i++) {
+        const units = document.getElementById(`units_${i}`).value;
+        const activation = document.getElementById(`activation_${i}`).value;
+        fcLayers.push({ units, activation });
+    }
+
+    const params = {
+        modelName: modelName,
+        epochs: epochs,
+        batchSize: batchSize,
+        learningRate: learningRate,
+        fcLayers: fcLayers
+    };
+
+    fetch('/train_model', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(params)
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('output').innerHTML = `<h2>Training Output</h2><pre>${JSON.stringify(data, null, 2)}</pre>`;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+</script>
