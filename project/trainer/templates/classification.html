@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <h1>학습 파라미터 작성</h1>
-        <form id="cnnForm">
+        <form id="cnnForm" action="{{url_for('single_instance.classification')}}" method="post">
             <label for="imagePath">Image Folder:</label>
             <input type="text" id="imagePath" name="imagePath" readonly>
             <button type="button" onclick="selectFolder()">Select Folder</button>
@@ -40,7 +40,7 @@
                 </div>
             </div>
             <button type="button" onclick="addLayerBlock()">Add Layer</button>
-            <button type="button" onclick="submitForm()">Train Model</button>
+            <button type="submit">Train Model</button>
         </form>
         <div id="output"></div>
     </div>
@@ -55,64 +55,27 @@ function addLayerBlock() {
     layerBlock.className = 'layerBlock';
     layerBlock.innerHTML = `
         <label for="filters_${layerCount}">Filters:</label>
-        <input type="number" id="filters_${layerCount}" name="filters" min="1" style="margin-left: 39px;" required> <br>
+        <input type="number" id="filters_${layerCount}" name="filters_${layerCount}" min="1" style="margin-left: 39px;" required> <br>
 
         <label for="kernelSize_${layerCount}">Kernel Size:</label>
-        <input type="number" id="kernelSize_${layerCount}" name="kernelSize" min="1" required> <br>
+        <input type="number" id="kernelSize_${layerCount}" name="kernelSize_${layerCount}" min="1" required> <br>
         
         <label for="stride_${layerCount}">Stride:</label>
-        <input type="number" id="stride_${layerCount}" name="stride" min="1" style="margin-left: 39px;" required>
+        <input type="number" id="stride_${layerCount}" name="stride_${layerCount}" min="1" style="margin-left: 39px;" required>
     `;
     document.getElementById('layerBlocks').appendChild(layerBlock);
 
     // Scroll to the bottom of the container to show the new layer block
     document.querySelector('.container').scrollTop = document.querySelector('.container').scrollHeight;
 }
-
-function submitForm() {
-    const epochs = document.getElementById('epochs').value;
-    const batchSize = document.getElementById('batchSize').value;
-    const learningRate = document.getElementById('learningRate').value;
-
-    const layers = [];
-    for (let i = 1; i <= layerCount; i++) {
-        const filters = document.getElementById(`filters_${i}`).value;
-        const kernelSize = document.getElementById(`kernelSize_${i}`).value;
-        const stride = document.getElementById(`stride_${i}`).value;
-        layers.push({ filters, kernelSize, stride });
-    }
-
-    const params = {
-        epochs: epochs,
-        batchSize: batchSize,
-        learningRate: learningRate,
-        layers: layers
-    };
-
-    fetch('/train_model', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(params)
-    })
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('output').innerHTML = `<h2>Training Output</h2><pre>${JSON.stringify(data, null, 2)}</pre>`;
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-
 function selectFolder() {
     const folderInput = document.createElement('input');
     folderInput.type = 'file';
     folderInput.webkitdirectory = true;
     folderInput.directory = true;
     folderInput.addEventListener('change', function () {
-        const path = this.files[0].webkitRelativePath.split('/');
-        document.getElementById('imagePath').value = this.files[0].webkitRelativePath.split("/");
+        const path = this.files[0].webkitRelativePath.split('/')[0];
+        document.getElementById('imagePath').value = this.files[0].webkitRelativePath.split("/")[0];
     });
     folderInput.click();
 }
